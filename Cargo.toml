@@ -1,0 +1,23 @@
+[package]
+name = "crab-chat"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+libp2p = { version = "0.55.0", features = [
+    "tokio",
+    "tcp",
+    "mdns",
+    "noise",
+    "yamux",
+    "identify",
+    "tls",
+    "ping",
+    "gossipsub",
+    "kad",
+] }
+clap = "4.5.31"
+tokio = { version = "1.43.0", features = ["full"] }
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+futures = "0.3.31"
+libp2p-swarm-derive = "0.35.0"
