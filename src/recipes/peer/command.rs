@@ -1,12 +1,14 @@
-use crate::{
-    peer::RecipeBehaviour,
-    peer::message::{ListMode, ListRequest, RecipeMessage},
-    recipes::Recipes,
-};
 use libp2p::floodsub::Topic;
 use log::info;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
+
+use crate::recipes::{
+    Recipes,
+    peer::message::{ListMode, ListRequest, RecipeMessage},
+};
+
+use super::RecipeBehaviour;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Command {

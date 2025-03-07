@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::{error::Error, path::PathBuf};
 use tokio::fs::OpenOptions;
 
+pub mod peer;
+
 #[derive(Debug, Clone)]
 pub struct Recipes {
     file: PathBuf,
