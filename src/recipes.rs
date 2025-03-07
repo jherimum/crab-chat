@@ -1,16 +1,8 @@
-use std::{error::Error, path::PathBuf};
-
 use serde::{Deserialize, Serialize};
-use tokio::{fs::OpenOptions, sync::OnceCell};
+use std::{error::Error, path::PathBuf};
+use tokio::fs::OpenOptions;
 
-static RECIPES: OnceCell<Recipes> = OnceCell::const_new();
-
-pub async fn recipes() -> &'static Recipes {
-    RECIPES
-        .get_or_init(|| async move { Recipes::new(PathBuf::from("./recipes.json")).await })
-        .await
-}
-
+#[derive(Debug, Clone)]
 pub struct Recipes {
     file: PathBuf,
 }
