@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use clap::Parser;
 use crab_chat::App;
 use crab_chat::BootstrapAddress;
@@ -7,7 +5,6 @@ use crab_chat::Cli;
 use crab_chat::Peer;
 use crab_chat::PeerConfig;
 use tap::TapFallible;
-use tokio::time::sleep;
 use tracing_subscriber::EnvFilter;
 
 const DEFAULT_ADDR: &str = "/ip4/0.0.0.0/tcp/0";
@@ -32,14 +29,14 @@ async fn main() -> Result<(), anyhow::Error> {
         .collect::<Result<_, _>>()?;
 
     let peer = Peer::new(PeerConfig::new(addr, bootstrap))?;
-    let listener = peer.subscribe();
-    let command_bus = peer.run().await?;
+    // let listener = peer.subscribe();
+    // let command_bus = peer.command_bus();
+    let app = App::new(peer);
 
-    let app = App::new(command_bus, listener);
-    app.start().await;
-
-    loop {
-        sleep(Duration::from_secs(1)).await;
+    tokio::select! {
+        _ = app.start() => {
+            log::info!("App finished");
+        }
     }
 
     Ok(())

@@ -1,10 +1,22 @@
+use bon::Builder;
+use derive_getters::Getters;
 use tokio::sync::broadcast;
 
 #[derive(Clone, Debug)]
 pub enum PeerEvent {
-    Started,
+    MessageReceived(MessageReceivedEvent),
 }
 
+#[derive(Clone, Debug, Getters, Builder)]
+pub struct MessageReceivedEvent {
+    message_id: String,
+    message: String,
+    timestamp: u64,
+    topic: String,
+    peer_id: String,
+}
+
+#[derive(Clone)]
 pub struct PeerEventBus {
     sender: broadcast::Sender<PeerEvent>,
 }

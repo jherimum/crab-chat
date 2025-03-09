@@ -28,6 +28,5 @@ impl PeerCommandBus {
 
 pub trait IntoPeerCommand {
     type Output;
-    fn into_command(self, tx: Sender<PeerResult<PeerCommandResponse<Self::Output>>>)
-    -> PeerCommand;
+    fn into_command(self, tx: Sender<PeerResult<Self::Output>>) -> PeerCommand;
 }

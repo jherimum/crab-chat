@@ -9,7 +9,7 @@ mod peer;
 pub type PeerResult<T> = Result<T, PeerError>;
 
 pub use bootstrap_address::BootstrapAddress;
-pub use command::StartCommand;
+pub use command::SubscribeCommand;
 pub use command_bus::PeerCommandBus;
 pub use error::PeerError;
 pub use event::PeerEvent;
