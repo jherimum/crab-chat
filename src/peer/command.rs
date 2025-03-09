@@ -1,9 +1,12 @@
-use super::{PeerResult, command_bus::IntoPeerCommand};
+use super::PeerResult;
 use bon::Builder;
 use derive_getters::Getters;
 use libp2p::gossipsub::MessageId;
 use std::fmt::Debug;
-use tokio::sync::oneshot;
+use tokio::sync::{
+    mpsc::UnboundedSender,
+    oneshot::{self, Sender},
+};
 
 #[derive(Debug)]
 pub enum PeerCommand {
@@ -68,14 +71,23 @@ impl IntoPeerCommand for SubscribeCommand {
     }
 }
 
-pub struct PeerCommandResponse<R>(oneshot::Receiver<PeerResult<R>>);
+pub struct PeerCommandBus {
+    sender: UnboundedSender<PeerCommand>,
+}
 
-impl<R> PeerCommandResponse<R> {
-    pub fn new(rx: oneshot::Receiver<PeerResult<R>>) -> Self {
-        Self(rx)
+impl PeerCommandBus {
+    pub fn new(sender: UnboundedSender<PeerCommand>) -> Self {
+        Self { sender }
     }
 
-    pub async fn result(self) -> PeerResult<R> {
-        self.0.await.unwrap()
+    pub async fn send<C: IntoPeerCommand>(&self, command: C) -> PeerResult<C::Output> {
+        let (tx, rx) = oneshot::channel();
+        self.sender.send(command.into_command(tx))?;
+        rx.await?
     }
+}
+
+pub trait IntoPeerCommand {
+    type Output;
+    fn into_command(self, tx: Sender<PeerResult<Self::Output>>) -> PeerCommand;
 }

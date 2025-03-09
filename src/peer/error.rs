@@ -2,7 +2,9 @@ use libp2p::{
     TransportError,
     gossipsub::{PublishError, SubscriptionError},
 };
-use tokio::io;
+use tokio::{io, sync::mpsc};
+
+use super::command::PeerCommand;
 
 #[derive(Debug, thiserror::Error)]
 pub enum PeerError {
@@ -23,4 +25,7 @@ pub enum PeerError {
 
     #[error("Failed to send event: {0}")]
     SubscribeError(#[from] SubscriptionError),
+
+    #[error("Failed to send event: {0}")]
+    SendError(#[from] mpsc::error::SendError<PeerCommand>),
 }

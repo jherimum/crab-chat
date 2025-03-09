@@ -39,28 +39,35 @@ impl App {
 
         while let Some(line) = stdin.next_line().await.unwrap() {
             match line.split_once(" ") {
-                Some(("/join", room)) => {
-                    self.peer.subscribe_topic(room.to_string()).await.unwrap();
-                }
+                Some(("/join", room)) => match self.peer.subscribe_topic(room.to_string()).await {
+                    Ok(_) => {
+                        println!("Joined room: {}", room);
+                    }
+                    Err(e) => {
+                        log::error!("Failed to join room: {}", e);
+                    }
+                },
                 Some(("/send", message)) => match message.split_once(" ") {
                     Some((room, message)) => {
-                        let message_id = self
+                        match self
                             .peer
                             .send_message(message.to_string(), room.to_string())
                             .await
-                            .unwrap()
-                            .result()
-                            .await
-                            .unwrap();
+                        {
+                            Ok(message_id) => {
+                                let message = ChatMessage::PeerMessage(PeerMessage {
+                                    peer_id: None,
+                                    message: message.to_string(),
+                                    message_id: message_id.to_string(),
+                                    timestamp: chrono::Utc::now().timestamp() as u64,
+                                });
 
-                        let message = ChatMessage::PeerMessage(PeerMessage {
-                            peer_id: None,
-                            message: message.to_string(),
-                            message_id: message_id.to_string(),
-                            timestamp: chrono::Utc::now().timestamp() as u64,
-                        });
-
-                        self.chats.add_message(room.to_string(), message).await;
+                                self.chats.add_message(room.to_string(), message).await;
+                            }
+                            Err(e) => {
+                                log::error!("Failed to send message: {}", e);
+                            }
+                        }
                     }
                     None => {
                         log::error!("Invalid message format");

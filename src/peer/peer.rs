@@ -1,4 +1,4 @@
-use super::command::{PeerCommandResponse, SendMessageCommand};
+use super::command::SendMessageCommand;
 use super::event::{PeerEventBus, PeerEventListener};
 use super::message::Message;
 use super::{BootstrapAddress, PeerCommandBus, PeerError, PeerResult, SubscribeCommand};
@@ -49,17 +49,13 @@ impl Peer {
         })
     }
 
-    pub async fn subscribe_topic(&self, topic: String) -> PeerResult<PeerCommandResponse<bool>> {
+    pub async fn subscribe_topic(&self, topic: String) -> PeerResult<bool> {
         self.command_bus
             .send(SubscribeCommand::builder().topic(topic).build())
             .await
     }
 
-    pub async fn send_message(
-        &self,
-        message: String,
-        topic: String,
-    ) -> PeerResult<PeerCommandResponse<MessageId>> {
+    pub async fn send_message(&self, message: String, topic: String) -> PeerResult<MessageId> {
         self.command_bus
             .send(
                 SendMessageCommand::builder()
