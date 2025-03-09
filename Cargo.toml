@@ -2,6 +2,8 @@
 name = "crab-chat"
 version = "0.1.0"
 edition = "2024"
+build = "build.rs"
+
 
 [dependencies]
 libp2p = { version = "0.55.0", features = [
@@ -11,6 +13,9 @@ libp2p = { version = "0.55.0", features = [
     "noise",
     "yamux",
     "floodsub",
+    "gossipsub",
+    "ping",
+    "kad",
 ] }
 tokio = { version = "1.43.0", features = ["full"] }
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
@@ -24,3 +29,12 @@ serde_json = { version = "1.0.140", features = ["preserve_order"] }
 ratatui = { version = "0.29.0", features = ["all-widgets"] }
 crossterm = { version = "0.28.1", features = ["event-stream"] }
 dotenvy = "0.15.7"
+thiserror = "2.0.12"
+anyhow = { version = "1.0.97", features = ["backtrace"] }
+clap = { version = "4.5.31", features = ["derive"] }
+tap = "1.0.1"
+
+
+[build-dependencies]
+anyhow = "1"
+vergen-gix = { version = "1.0.6", features = ["build", "cargo"] }
