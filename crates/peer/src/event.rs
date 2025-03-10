@@ -63,7 +63,9 @@ impl PeerEventListener {
         Self { receiver }
     }
 
-    pub async fn recv(&mut self) -> Result<PeerEvent, broadcast::error::RecvError> {
+    pub async fn recv(
+        &mut self,
+    ) -> Result<PeerEvent, broadcast::error::RecvError> {
         self.receiver.recv().await
     }
 }

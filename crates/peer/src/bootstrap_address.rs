@@ -24,13 +24,17 @@ impl FromStr for BootstrapAddress {
         let peer_id = match parts.next() {
             Some(peer_id) => Ok(PeerId::from_str(peer_id)
                 .map_err(|e| PeerError::InvalidBootstrapError(e.into()))?),
-            None => Err(PeerError::InvalidBootstrapError("Missing peer id".into())),
+            None => {
+                Err(PeerError::InvalidBootstrapError("Missing peer id".into()))
+            }
         }?;
 
         let addr = match parts.next() {
             Some(addr) => Ok(Multiaddr::from_str(addr)
                 .map_err(|e| PeerError::InvalidBootstrapError(e.into()))?),
-            None => Err(PeerError::InvalidBootstrapError("Missing address".into())),
+            None => {
+                Err(PeerError::InvalidBootstrapError("Missing address".into()))
+            }
         }?;
 
         Ok(Self::new(addr, peer_id))

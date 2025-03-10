@@ -25,7 +25,9 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     let inner = Layout::default()
         .direction(Direction::Horizontal)
         .margin(0)
-        .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
+        .constraints(
+            [Constraint::Percentage(20), Constraint::Percentage(80)].as_ref(),
+        )
         .split(outer[1]);
 
     frame.render_widget(

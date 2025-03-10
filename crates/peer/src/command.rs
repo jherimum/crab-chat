@@ -49,7 +49,10 @@ pub struct SendMessageCommand {
 
 impl IntoPeerCommand for SendMessageCommand {
     type Output = MessageId;
-    fn into_command(self, sender: oneshot::Sender<PeerResult<Self::Output>>) -> PeerCommand {
+    fn into_command(
+        self,
+        sender: oneshot::Sender<PeerResult<Self::Output>>,
+    ) -> PeerCommand {
         PeerCommand::SendMessage(Command {
             command: self,
             sender,
@@ -64,7 +67,10 @@ pub struct SubscribeCommand {
 
 impl IntoPeerCommand for SubscribeCommand {
     type Output = bool;
-    fn into_command(self, sender: oneshot::Sender<PeerResult<Self::Output>>) -> PeerCommand {
+    fn into_command(
+        self,
+        sender: oneshot::Sender<PeerResult<Self::Output>>,
+    ) -> PeerCommand {
         PeerCommand::Subscribe(Command {
             command: self,
             sender,
@@ -79,7 +85,10 @@ pub struct UnsubscribeCommand {
 
 impl IntoPeerCommand for UnsubscribeCommand {
     type Output = bool;
-    fn into_command(self, sender: oneshot::Sender<PeerResult<Self::Output>>) -> PeerCommand {
+    fn into_command(
+        self,
+        sender: oneshot::Sender<PeerResult<Self::Output>>,
+    ) -> PeerCommand {
         PeerCommand::Unsubscribe(Command {
             command: self,
             sender,
@@ -97,7 +106,10 @@ impl PeerCommandBus {
         Self { sender }
     }
 
-    pub async fn send<C: IntoPeerCommand>(&self, command: C) -> PeerResult<C::Output> {
+    pub async fn send<C: IntoPeerCommand>(
+        &self,
+        command: C,
+    ) -> PeerResult<C::Output> {
         let (tx, rx) = oneshot::channel();
         self.sender.send(command.into_command(tx))?;
         rx.await?

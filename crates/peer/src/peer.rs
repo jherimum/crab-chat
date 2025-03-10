@@ -1,7 +1,9 @@
 use super::command::{SendMessageCommand, UnsubscribeCommand};
 use super::event::{PeerEventBus, PeerEventListener};
 use super::message::Message;
-use super::{BootstrapAddress, PeerCommandBus, PeerError, PeerResult, SubscribeCommand};
+use super::{
+    BootstrapAddress, PeerCommandBus, PeerError, PeerResult, SubscribeCommand,
+};
 use crate::PeerEvent;
 use crate::command::PeerCommand;
 use crate::event::{MessageReceivedEvent, PeerJoinedEvent, PeerLeftEvent};
@@ -11,7 +13,9 @@ use libp2p::gossipsub::{IdentTopic, MessageId, PublishError, SubscriptionError};
 use libp2p::identity::Keypair;
 use libp2p::mdns::{Config as MdsnConfig, tokio::Behaviour as MdsnBehaviour};
 use libp2p::swarm::SwarmEvent;
-use libp2p::{Multiaddr, PeerId, Swarm, SwarmBuilder, gossipsub, mdns, noise, tcp, yamux};
+use libp2p::{
+    Multiaddr, PeerId, Swarm, SwarmBuilder, gossipsub, mdns, noise, tcp, yamux,
+};
 use libp2p_swarm_derive::NetworkBehaviour;
 use std::time::Duration;
 use tokio::sync::mpsc;
@@ -31,7 +35,8 @@ impl Peer {
     pub fn new(config: PeerConfig) -> PeerResult<Self> {
         let peer_id = config.keypair.public().to_peer_id();
         log::info!("Starting peer: {}", peer_id);
-        let (command_bus_tx, command_bus_rx) = tokio::sync::mpsc::unbounded_channel();
+        let (command_bus_tx, command_bus_rx) =
+            tokio::sync::mpsc::unbounded_channel();
 
         let mut listeners = Vec::new();
         let mut swarm: Swarm<PeerBehaviour> =
@@ -46,7 +51,9 @@ impl Peer {
                 .with_behaviour(|k| PeerBehaviour::new(k, config.bootstrap))
                 .map_err(|e| PeerError::SwarmError(e.into()))?
                 .with_swarm_config(|cfg| {
-                    cfg.with_idle_connection_timeout(Duration::from_secs(u64::MAX))
+                    cfg.with_idle_connection_timeout(Duration::from_secs(
+                        u64::MAX,
+                    ))
                 })
                 .build();
         listeners.push(swarm.listen_on(config.addr.clone())?);
@@ -77,7 +84,11 @@ impl Peer {
             .await
     }
 
-    pub async fn send_message(&self, message: String, topic: String) -> PeerResult<MessageId> {
+    pub async fn send_message(
+        &self,
+        message: String,
+        topic: String,
+    ) -> PeerResult<MessageId> {
         self.command_bus
             .send(
                 SendMessageCommand::builder()
@@ -172,7 +183,11 @@ pub struct PeerConfig {
 }
 
 impl PeerConfig {
-    pub fn new(addr: Multiaddr, bootstrap: Vec<BootstrapAddress>, keypair: Keypair) -> Self {
+    pub fn new(
+        addr: Multiaddr,
+        bootstrap: Vec<BootstrapAddress>,
+        keypair: Keypair,
+    ) -> Self {
         Self {
             addr,
             bootstrap,
@@ -197,7 +212,8 @@ impl PeerBehaviour {
             gossip_config,
         )
         .unwrap();
-        let mdns = MdsnBehaviour::new(MdsnConfig::default(), local_peer_id).unwrap();
+        let mdns =
+            MdsnBehaviour::new(MdsnConfig::default(), local_peer_id).unwrap();
 
         let mut kad = libp2p::kad::Behaviour::new(
             local_peer_id,
@@ -211,7 +227,10 @@ impl PeerBehaviour {
         Self { gossip, mdns, kad }
     }
 
-    pub fn subscribe(&mut self, commad: &SubscribeCommand) -> Result<bool, SubscriptionError> {
+    pub fn subscribe(
+        &mut self,
+        commad: &SubscribeCommand,
+    ) -> Result<bool, SubscriptionError> {
         let topic = IdentTopic::new(commad.topic());
         self.gossip.subscribe(&topic)
     }
