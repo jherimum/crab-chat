@@ -1,15 +1,10 @@
-[workspace]
-members = ["crates/peer", "crates/ui"]
-
 [package]
-name = "crab-chat"
+name = "crab-chat-peer"
 version = "0.1.0"
 edition = "2024"
 
 
 [dependencies]
-crab-chat-peer = { path = "crates/peer" }
-crab-chat-ui = { path = "crates/ui" }
 libp2p = { version = "0.55.0", features = [
     "tokio",
     "tcp",
@@ -45,4 +40,3 @@ tui-textarea = { version = "0.7.0", features = ["ratatui"] }
 
 [build-dependencies]
 anyhow = "1"
-vergen-gix = { version = "1.0.6", features = ["build", "cargo"] }

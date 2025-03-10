@@ -2,20 +2,15 @@ use std::error::Error;
 use std::io;
 
 use clap::Parser;
-use crab_chat::BootstrapAddress;
 use crab_chat::Cli;
-use crab_chat::Peer;
-use crab_chat::PeerConfig;
-use crab_chat::event::EventHandler;
-use crab_chat::handler::handle_key_events;
-use crab_chat::tui::Tui;
-use crab_chat::ui;
-use crab_chat::ui::app::App;
+use crab_chat_peer::{BootstrapAddress, Peer, PeerConfig};
+use crab_chat_ui::app::App;
+use crab_chat_ui::event::EventHandler;
+use crab_chat_ui::tui::Tui;
 use libp2p::identity::Keypair;
 use ratatui::Terminal;
 use ratatui::prelude::CrosstermBackend;
 use tap::TapFallible;
-use tracing_subscriber::EnvFilter;
 
 const DEFAULT_ADDR: &str = "/ip4/0.0.0.0/tcp/0";
 
@@ -50,18 +45,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut tui = Tui::new(terminal, events);
     tui.init()?;
 
-    // Start the main loop.
-    while app.running {
-        // Render the user interface.
-        tui.draw(&mut app)?;
-        // Handle events.
-        match tui.events.next().await? {
-            ui::event::Event::Tick => app.tick(),
-            ui::event::Event::Key(key_event) => handle_key_events(key_event, &mut app)?,
-            ui::event::Event::Mouse(_) => {}
-            ui::event::Event::Resize(_, _) => {}
-        }
-    }
+    // // Start the main loop.
+    // while app.running {
+    //     // Render the user interface.
+    //     tui.draw(&mut app)?;
+    //     // Handle events.
+    //     match tui.events.next().await? {
+    //         ui::event::Event::Tick => app.tick(),
+    //         ui::event::Event::Key(key_event) => handle_key_events(key_event, &mut app)?,
+    //         ui::event::Event::Mouse(_) => {}
+    //         ui::event::Event::Resize(_, _) => {}
+    //     }
+    // }
 
     tui.exit()?;
 

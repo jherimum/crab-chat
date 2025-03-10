@@ -671,6 +671,8 @@ dependencies = [
  "bon",
  "chrono",
  "clap",
+ "crab-chat-peer",
+ "crab-chat-ui",
  "crossterm",
  "derive-getters",
  "dotenvy",
@@ -688,6 +690,61 @@ dependencies = [
  "tui-textarea",
  "uuid",
  "vergen-gix",
+]
+
+[[package]]
+name = "crab-chat-peer"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bon",
+ "chrono",
+ "clap",
+ "crossterm",
+ "derive-getters",
+ "dotenvy",
+ "futures",
+ "libp2p",
+ "libp2p-swarm-derive",
+ "log",
+ "ratatui",
+ "serde",
+ "serde_json",
+ "tap",
+ "thiserror 2.0.12",
+ "tokio",
+ "tracing-subscriber",
+ "tui-textarea",
+ "uuid",
+]
+
+[[package]]
+name = "crab-chat-ui"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bon",
+ "chrono",
+ "clap",
+ "crab-chat-peer",
+ "crossterm",
+ "derive-getters",
+ "dotenvy",
+ "futures",
+ "libp2p",
+ "libp2p-swarm-derive",
+ "log",
+ "ratatui",
+ "serde",
+ "serde_json",
+ "tap",
+ "thiserror 2.0.12",
+ "tokio",
+ "tracing-subscriber",
+ "tui-textarea",
+ "uuid",
 ]
 
 [[package]]

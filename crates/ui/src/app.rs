@@ -1,6 +1,6 @@
+use crab_chat_peer::Peer;
 use tui_textarea::TextArea;
 
-use crate::Peer;
 use std::error;
 
 /// Application result type.
