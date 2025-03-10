@@ -5,6 +5,22 @@ use tokio::sync::broadcast;
 #[derive(Clone, Debug)]
 pub enum PeerEvent {
     MessageReceived(MessageReceivedEvent),
+    PeerJoined(PeerJoinedEvent),
+    PeerLeft(PeerLeftEvent),
+}
+
+#[derive(Clone, Debug, Getters, Builder)]
+pub struct PeerLeftEvent {
+    peer_id: String,
+    topic: String,
+    timestamp: u64,
+}
+
+#[derive(Clone, Debug, Getters, Builder)]
+pub struct PeerJoinedEvent {
+    peer_id: String,
+    topic: String,
+    timestamp: u64,
 }
 
 #[derive(Clone, Debug, Getters, Builder)]
@@ -16,7 +32,7 @@ pub struct MessageReceivedEvent {
     peer_id: String,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PeerEventBus {
     sender: broadcast::Sender<PeerEvent>,
 }

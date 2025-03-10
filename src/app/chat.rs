@@ -1,28 +1,45 @@
 use std::{
     collections::{BTreeMap, HashMap},
+    fmt::Display,
     sync::Arc,
 };
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 
 #[derive(Clone)]
-pub struct Chats(Arc<Mutex<HashMap<String, Chat>>>);
+pub struct Chats(Arc<RwLock<HashMap<String, Chat>>>);
 
 impl Chats {
     pub fn new() -> Self {
-        Self(Arc::new(Mutex::new(HashMap::new())))
+        Self(Default::default())
     }
 
-    pub async fn add_message(&self, topic: String, message: ChatMessage) {
-        let mut chats = self.0.lock().await;
-        let chat = chats.entry(topic).or_insert_with(|| Chat::new());
-        chat.add_message(message);
+    pub async fn rooms(&self) -> Vec<String> {
+        self.0.read().await.keys().cloned().collect()
     }
 
-    pub async fn get_messages(&self, topic: String) -> Vec<ChatMessage> {
-        let chats_guard = self.0.lock().await;
-        match chats_guard.get(&topic) {
-            Some(chat) => chat.get_messages().into_iter().cloned().collect(),
-            None => Vec::new(),
+    pub async fn add_room(&mut self, topic: &str) {
+        self.0
+            .write()
+            .await
+            .entry(topic.to_string())
+            .or_insert_with(Chat::new);
+    }
+
+    pub async fn remove_room(&mut self, topic: &str) {
+        self.0.write().await.remove(topic);
+    }
+
+    pub async fn add_message(&mut self, topic: &str, message: ChatMessage) {
+        if let Some(chat) = self.0.write().await.get(topic) {
+            chat.add_message(message).await;
+        }
+    }
+
+    pub async fn get_messages(&self, topic: &str) -> Vec<ChatMessage> {
+        if let Some(chat) = self.0.read().await.get(topic) {
+            chat.get_messages().await
+        } else {
+            Vec::new()
         }
     }
 }
@@ -30,12 +47,57 @@ impl Chats {
 #[derive(Clone, Debug)]
 pub enum ChatMessage {
     PeerMessage(PeerMessage),
+    NotificationMessage(NotificationMessage),
+}
+
+impl Display for ChatMessage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let dispaly = match self {
+            ChatMessage::PeerMessage(peer_message) => peer_message.to_string(),
+            ChatMessage::NotificationMessage(notification_message) => {
+                notification_message.to_string()
+            }
+        };
+        write!(f, "{}", dispaly)
+    }
 }
 
 impl ChatMessage {
     pub fn timestamp(&self) -> u64 {
         match self {
             ChatMessage::PeerMessage(message) => message.timestamp,
+            ChatMessage::NotificationMessage(notification) => match notification {
+                NotificationMessage::PeerJoined(notification) => notification.timestamp,
+            },
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum NotificationMessage {
+    PeerJoined(PeerJoinedNotification),
+}
+
+#[derive(Clone, Debug)]
+pub struct PeerJoinedNotification {
+    pub peer_id: String,
+    pub topic: String,
+    pub timestamp: u64,
+    pub leave: bool,
+}
+
+impl Display for NotificationMessage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NotificationMessage::PeerJoined(notification) => {
+                write!(
+                    f,
+                    "{} {} the room at {}",
+                    notification.peer_id,
+                    if notification.leave { "left" } else { "joined" },
+                    notification.timestamp
+                )
+            }
         }
     }
 }
@@ -48,23 +110,37 @@ pub struct PeerMessage {
     pub timestamp: u64,
 }
 
-#[derive(Default)]
+impl Display for PeerMessage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} at {}: {}",
+            self.peer_id.as_deref().unwrap_or("me"),
+            self.timestamp,
+            self.message
+        )
+    }
+}
+
+#[derive(Default, Clone)]
 pub struct Chat {
-    messages: BTreeMap<u64, ChatMessage>,
+    messages: Arc<RwLock<BTreeMap<u64, ChatMessage>>>,
 }
 
 impl Chat {
     pub fn new() -> Self {
         Self {
-            messages: BTreeMap::new(),
+            messages: Default::default(),
         }
     }
 
-    pub fn add_message(&mut self, message: ChatMessage) {
-        self.messages.insert(message.timestamp(), message);
+    pub async fn add_message(&self, message: ChatMessage) {
+        let mut messages = self.messages.write().await;
+        messages.insert(message.timestamp(), message);
     }
 
-    pub fn get_messages(&self) -> Vec<&ChatMessage> {
-        self.messages.values().collect()
+    pub async fn get_messages(&self) -> Vec<ChatMessage> {
+        let messages = self.messages.read().await;
+        messages.values().cloned().collect()
     }
 }

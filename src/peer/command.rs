@@ -12,6 +12,7 @@ use tokio::sync::{
 pub enum PeerCommand {
     SendMessage(Command<SendMessageCommand, MessageId>),
     Subscribe(Command<SubscribeCommand, bool>),
+    Unsubscribe(Command<UnsubscribeCommand, bool>),
 }
 
 pub struct Command<C, R> {
@@ -71,6 +72,22 @@ impl IntoPeerCommand for SubscribeCommand {
     }
 }
 
+#[derive(Debug, Getters, Builder)]
+pub struct UnsubscribeCommand {
+    topic: String,
+}
+
+impl IntoPeerCommand for UnsubscribeCommand {
+    type Output = bool;
+    fn into_command(self, sender: oneshot::Sender<PeerResult<Self::Output>>) -> PeerCommand {
+        PeerCommand::Unsubscribe(Command {
+            command: self,
+            sender,
+        })
+    }
+}
+
+#[derive(Debug)]
 pub struct PeerCommandBus {
     sender: UnboundedSender<PeerCommand>,
 }

@@ -1,34 +1,63 @@
 use ratatui::{
     Frame,
-    layout::Alignment,
-    style::{Color, Style},
-    widgets::{Block, BorderType, Paragraph},
+    layout::{Alignment, Constraint, Direction, Layout},
+    style::{Color, Style, Stylize},
+    widgets::{Block, BorderType, Borders, Paragraph},
 };
+use tui_textarea::TextArea;
 
 use super::app::App;
 
-/// Renders the user interface widgets.
 pub fn render(app: &mut App, frame: &mut Frame) {
-    // This is where you add new widgets.
-    // See the following resources:
-    // - https://docs.rs/ratatui/latest/ratatui/widgets/index.html
-    // - https://github.com/ratatui/ratatui/tree/master/examples
-    frame.render_widget(
-        Paragraph::new(format!(
-            "This is a tui template.\n\
-                Press `Esc`, `Ctrl-C` or `q` to stop running.\n\
-                Press left and right to increment and decrement the counter respectively.\n\
-                Counter: {}",
-            app.counter
-        ))
-        .block(
-            Block::bordered()
-                .title("Template")
-                .title_alignment(Alignment::Center)
-                .border_type(BorderType::Rounded),
+    let outer = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(0)
+        .constraints(
+            [
+                Constraint::Length(3),
+                Constraint::Percentage(100),
+                Constraint::Length(3),
+            ]
+            .as_ref(),
         )
-        .style(Style::default().fg(Color::Cyan).bg(Color::Black))
-        .centered(),
-        frame.area(),
-    )
+        .split(frame.area());
+
+    let inner = Layout::default()
+        .direction(Direction::Horizontal)
+        .margin(0)
+        .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
+        .split(outer[1]);
+
+    frame.render_widget(
+        Paragraph::new("Crab chat -  A decentralized chat")
+            .block(Block::default().borders(Borders::ALL))
+            .style(Style::default().fg(Color::Black).bg(Color::Green).bold()),
+        outer[0],
+    );
+
+    frame.render_widget(
+        Block::default()
+            .title("Rooms")
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::Green))
+            .style(Style::default().bg(Color::Black)),
+        inner[0],
+    );
+
+    frame.render_widget(
+        Block::default()
+            .title("Rooms")
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::Green))
+            .style(Style::default().bg(Color::Black)),
+        inner[1],
+    );
+
+    app.input.set_block(
+        Block::default()
+            .borders(Borders::ALL)
+            .title("Crossterm Minimal Example"),
+    );
+
+    frame.render_widget(&app.input, outer[2]);
 }
