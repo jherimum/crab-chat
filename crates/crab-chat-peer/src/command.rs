@@ -44,7 +44,6 @@ impl<C: Debug, R> Debug for Command<C, R> {
 pub struct SendMessageCommand {
     message: String,
     topic: String,
-    timestamp: u64,
 }
 
 impl IntoPeerCommand for SendMessageCommand {
@@ -96,7 +95,7 @@ impl IntoPeerCommand for UnsubscribeCommand {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PeerCommandBus {
     sender: UnboundedSender<PeerCommand>,
 }

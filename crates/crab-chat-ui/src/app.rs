@@ -36,6 +36,8 @@ pub enum Mode {
 
 impl App {
     pub fn new(tick_rate: f64, frame_rate: f64, peer: Peer) -> Result<Self> {
+        let peer_command_bus = peer.command_bus().clone();
+        let peer_event_listener = peer.subscribe();
         let (action_tx, action_rx) = mpsc::unbounded_channel();
         Ok(Self {
             tick_rate,

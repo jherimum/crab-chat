@@ -32,13 +32,15 @@ impl Peer {
         &self.peer_id
     }
 
+    pub fn command_bus(&self) -> &PeerCommandBus {
+        &self.command_bus
+    }
+
     pub fn new(config: PeerConfig) -> PeerResult<Self> {
         let peer_id = config.keypair.public().to_peer_id();
         log::info!("Starting peer: {}", peer_id);
-        let (command_bus_tx, command_bus_rx) =
-            tokio::sync::mpsc::unbounded_channel();
+        let (command_bus_tx, command_bus_rx) = mpsc::unbounded_channel();
 
-        let mut listeners = Vec::new();
         let mut swarm: Swarm<PeerBehaviour> =
             SwarmBuilder::with_existing_identity(config.keypair.clone())
                 .with_tokio()
@@ -56,7 +58,8 @@ impl Peer {
                     ))
                 })
                 .build();
-        listeners.push(swarm.listen_on(config.addr.clone())?);
+
+        swarm.listen_on(config.addr.clone())?;
 
         let event_bus = PeerEventBus::new();
         tokio::spawn(swarm_loop(
@@ -94,7 +97,6 @@ impl Peer {
                 SendMessageCommand::builder()
                     .message(message)
                     .topic(topic)
-                    .timestamp(Utc::now().timestamp() as u64)
                     .build(),
             )
             .await
@@ -161,6 +163,7 @@ async fn swarm_loop(
 
                         },
                         PeerCommand::Subscribe(cmd) => {
+                            log::info!("Subscribing to topic: {}", cmd.as_ref().topic());
                             let response = swarm.behaviour_mut().subscribe(cmd.as_ref());
                             cmd.send(response.map_err(PeerError::from));
 
@@ -246,7 +249,7 @@ impl PeerBehaviour {
     ) -> Result<MessageId, PublishError> {
         let message = Message::builder()
             .data(command.message().clone())
-            .timestamp(*command.timestamp())
+            .timestamp(Utc::now().timestamp() as u64)
             .topic(command.topic().clone())
             .build();
         let data = serde_json::to_vec(&message).unwrap();

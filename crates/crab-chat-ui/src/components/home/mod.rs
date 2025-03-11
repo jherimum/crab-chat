@@ -1,13 +1,16 @@
 use std::collections::HashMap;
 use chat::ChatWidget;
 use color_eyre::Result;
-use crab_chat_peer::{Peer, PeerEventListener};
+use crab_chat_peer::{
+    Peer, PeerEventListener, SendMessageCommand, SubscribeCommand,
+    UnsubscribeCommand,
+};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use header::HeaderWidget;
 use models::Room;
 use ratatui::{prelude::*, widgets::*};
 use rooms::RoomsWidget;
-use tokio::sync::mpsc::UnboundedSender;
+use tokio::{runtime::Handle, sync::mpsc::UnboundedSender};
 use super::Component;
 use crate::{action::Action, config::Config};
 
@@ -22,7 +25,7 @@ async fn handle_peer_events(
 ) {
     loop {
         match event_listener.recv().await {
-            Ok(_) => todo!(),
+            Ok(x) => tracing::info!("event: {:?}", x),
             Err(_) => todo!(),
         }
     }
@@ -52,10 +55,50 @@ impl Home {
             config: Config::default(),
             rooms: HashMap::new(),
             actual_room: None,
-            peer,
             mode: Default::default(),
             rooms_state: ListState::default(),
+            peer,
         }
+    }
+
+    fn enter_room(&self, room: String) {
+        let f = self.peer.command_bus().clone();
+        let room = room.clone();
+
+        let x = Handle::current().block_on(async move {
+            f.send(SubscribeCommand::builder().topic(room).build())
+                .await
+        });
+    }
+
+    async fn leave_room(&self, room: &str) {
+        let command_bus = self.peer.command_bus().clone();
+        let room = room.to_owned();
+        let result = Handle::current().block_on(async move {
+            command_bus
+                .send(
+                    UnsubscribeCommand::builder()
+                        .topic(room.to_string())
+                        .build(),
+                )
+                .await
+        });
+    }
+
+    async fn send_message(&self, room: &str, message: &str) {
+        let command_bus = self.peer.command_bus().clone();
+        let room = room.to_owned();
+        let message = message.to_owned();
+        let result = Handle::current().block_on(async move {
+            command_bus
+                .send(
+                    SendMessageCommand::builder()
+                        .topic(room)
+                        .message(message)
+                        .build(),
+                )
+                .await
+        });
     }
 
     fn room_navigate(&mut self, up: bool) {
@@ -75,21 +118,10 @@ impl Home {
 
 impl Component for Home {
     fn init(&mut self, _: Size) -> Result<()> {
-        let listener = self.peer.subscribe();
         tokio::spawn(handle_peer_events(
-            listener,
+            self.peer.subscribe(),
             self.command_tx.clone().unwrap(),
         ));
-
-        self.rooms
-            .entry("sala 1".to_string())
-            .insert_entry(Default::default());
-
-        self.rooms
-            .entry("sala 2".to_string())
-            .insert_entry(Default::default());
-
-        self.rooms_state.select_first();
         Ok(())
     }
 
@@ -116,6 +148,9 @@ impl Component for Home {
             }
             (_, KeyCode::Tab, KeyModifiers::NONE) => {
                 self.chnage_focus();
+            }
+            (_, KeyCode::Char('j'), KeyModifiers::CONTROL) => {
+                self.enter_room("room".to_owned());
             }
             _ => {}
         }
