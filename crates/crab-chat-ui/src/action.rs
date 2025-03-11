@@ -12,5 +12,4 @@ pub enum Action {
     ClearScreen,
     Error(String),
     Help,
-    Rooms,
 }

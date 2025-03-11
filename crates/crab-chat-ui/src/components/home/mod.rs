@@ -1,12 +1,20 @@
 use std::collections::HashMap;
+use chat::ChatWidget;
 use color_eyre::Result;
 use crab_chat_peer::{Peer, PeerEventListener};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use header::HeaderWidget;
+use models::Room;
 use ratatui::{prelude::*, widgets::*};
+use rooms::RoomsWidget;
 use tokio::sync::mpsc::UnboundedSender;
-
 use super::Component;
 use crate::{action::Action, config::Config};
+
+mod chat;
+mod header;
+mod models;
+mod rooms;
 
 async fn handle_peer_events(
     mut event_listener: PeerEventListener,
@@ -20,20 +28,21 @@ async fn handle_peer_events(
     }
 }
 
-pub enum Focus {
-    Rooms,
+#[derive(Default)]
+pub enum Mode {
     Chat,
-    Input,
+    #[default]
+    Rooms,
 }
 
 pub struct Home {
     peer: Peer,
     command_tx: Option<UnboundedSender<Action>>,
     config: Config,
-    text: String,
     rooms: HashMap<String, Room>,
     actual_room: Option<String>,
-    show_rooms: bool,
+    mode: Mode,
+    rooms_state: ListState,
 }
 
 impl Home {
@@ -41,50 +50,26 @@ impl Home {
         Self {
             command_tx: None,
             config: Config::default(),
-            text: String::new(),
             rooms: HashMap::new(),
             actual_room: None,
             peer,
-            show_rooms: false,
+            mode: Default::default(),
+            rooms_state: ListState::default(),
         }
     }
-}
 
-impl Home {
-    fn draw_chat(&mut self, frame: &mut Frame, area: Rect) {
-        frame.render_widget(
-            Block::default()
-                .borders(Borders::ALL)
-                .bg(Color::Black)
-                .title("Chat")
-                .title_alignment(Alignment::Center)
-                .title_style(Style::default().fg(Color::Green)),
-            area,
-        );
+    fn room_navigate(&mut self, up: bool) {
+        match up {
+            true => self.rooms_state.select_previous(),
+            false => self.rooms_state.select_next(),
+        }
     }
 
-    fn draw_header(&mut self, frame: &mut Frame, area: Rect) {
-        frame.render_widget(
-            Paragraph::new("Crab Chat")
-                .alignment(Alignment::Center)
-                .bold()
-                .block(Block::bordered())
-                .black()
-                .bg(Color::Green),
-            area,
-        );
-    }
-
-    fn draw_rooms(&mut self, frame: &mut Frame, area: Rect) {
-        frame.render_widget(
-            Block::default()
-                .borders(Borders::ALL)
-                .bg(Color::Black)
-                .title("My Rooms")
-                .title_alignment(Alignment::Center)
-                .title_style(Style::default().fg(Color::Green)),
-            area,
-        );
+    fn chnage_focus(&mut self) {
+        match &self.mode {
+            Mode::Chat => self.mode = Mode::Rooms,
+            Mode::Rooms => self.mode = Mode::Chat,
+        }
     }
 }
 
@@ -95,6 +80,16 @@ impl Component for Home {
             listener,
             self.command_tx.clone().unwrap(),
         ));
+
+        self.rooms
+            .entry("sala 1".to_string())
+            .insert_entry(Default::default());
+
+        self.rooms
+            .entry("sala 2".to_string())
+            .insert_entry(Default::default());
+
+        self.rooms_state.select_first();
         Ok(())
     }
 
@@ -112,18 +107,15 @@ impl Component for Home {
     }
 
     fn handle_key_event(&mut self, key: KeyEvent) -> Result<Option<Action>> {
-        match (key.code, key.modifiers) {
-            (KeyCode::Char('r'), KeyModifiers::CONTROL) => {
-                return Ok(Some(Action::Rooms));
+        match (&self.mode, key.code, key.modifiers) {
+            (Mode::Rooms, KeyCode::Down, KeyModifiers::NONE) => {
+                self.room_navigate(false);
             }
-            _ => Ok(None),
-        }
-    }
-
-    fn update(&mut self, action: Action) -> Result<Option<Action>> {
-        match action {
-            Action::Rooms => {
-                self.show_rooms = true;
+            (Mode::Rooms, KeyCode::Up, KeyModifiers::NONE) => {
+                self.room_navigate(true);
+            }
+            (_, KeyCode::Tab, KeyModifiers::NONE) => {
+                self.chnage_focus();
             }
             _ => {}
         }
@@ -134,9 +126,9 @@ impl Component for Home {
         let (header, main, footer) = vertical_layout(area);
         let (rooms, chat_panel) = horizontal_layout(main);
         let (chat, input, participants) = chat_layout(chat_panel);
-        self.draw_header(frame, header);
-        self.draw_rooms(frame, rooms);
-        self.draw_chat(frame, chat_panel);
+        frame.render_widget(HeaderWidget, header);
+        frame.render_stateful_widget(RoomsWidget, rooms, self);
+        frame.render_stateful_widget(ChatWidget, chat_panel, self);
 
         Ok(())
     }
@@ -176,14 +168,4 @@ fn chat_layout(area: Rect) -> (Rect, Rect, Rect) {
         .split(hr[0]);
 
     (vr[0], vr[1], hr[1])
-}
-
-pub struct Room {
-    name: String,
-    chat: Chat,
-}
-
-pub struct Chat {
-    messages: Vec<String>,
-    input: String,
 }
