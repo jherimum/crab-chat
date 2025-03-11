@@ -1,16 +1,13 @@
 use std::error::Error;
-use std::io;
-
 use clap::Parser;
-use crab_chat::Cli;
+use cli::Cli;
 use crab_chat_peer::{BootstrapAddress, Peer, PeerConfig};
-use crab_chat_ui::app::App;
-use crab_chat_ui::event::EventHandler;
-use crab_chat_ui::tui::Tui;
+use crab_chat_ui::ui;
 use libp2p::identity::Keypair;
-use ratatui::Terminal;
-use ratatui::prelude::CrosstermBackend;
 use tap::TapFallible;
+use tracing_subscriber::EnvFilter;
+
+pub mod cli;
 
 const DEFAULT_ADDR: &str = "/ip4/0.0.0.0/tcp/0";
 
@@ -34,37 +31,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .collect::<Result<_, _>>()?;
 
     let keypair = Keypair::generate_ed25519();
-
     let peer = Peer::new(PeerConfig::new(addr, bootstrap, keypair))?;
-    //let mut app = App::new(peer);
 
-    let mut app = App::new(peer);
-    let backend = CrosstermBackend::new(io::stdout());
-    let terminal = Terminal::new(backend)?;
-    let events = EventHandler::new(250);
-    let mut tui = Tui::new(terminal, events);
-    tui.init()?;
-
-    // // Start the main loop.
-    // while app.running {
-    //     // Render the user interface.
-    //     tui.draw(&mut app)?;
-    //     // Handle events.
-    //     match tui.events.next().await? {
-    //         ui::event::Event::Tick => app.tick(),
-    //         ui::event::Event::Key(key_event) => handle_key_events(key_event, &mut app)?,
-    //         ui::event::Event::Mouse(_) => {}
-    //         ui::event::Event::Resize(_, _) => {}
-    //     }
-    // }
-
-    tui.exit()?;
-
-    // tokio::select! {
-    //     _ = app.start() => {
-    //         log::info!("App finished");
-    //     }
-    // }
+    ui(peer).await?;
 
     Ok(())
 }

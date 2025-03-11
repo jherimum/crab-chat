@@ -13,5 +13,13 @@ pub use command::SubscribeCommand;
 pub use error::PeerError;
 pub use event::PeerEvent;
 pub use event::PeerEventListener;
+use libp2p::identity::Keypair;
 pub use peer::Peer;
 pub use peer::PeerConfig;
+
+pub fn create_peer() -> Peer {
+    let keypair = Keypair::generate_ed25519();
+    let cfg =
+        PeerConfig::new("/ip4/0.0.0.0/tcp/0".parse().unwrap(), vec![], keypair);
+    Peer::new(cfg).unwrap()
+}
