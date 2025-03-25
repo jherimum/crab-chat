@@ -1,3 +1,5 @@
 [workspace]
 members = ["crates/crab-chat-peer", "crates/crab-chat-ui"]
+
+
 resolver = "2"
