@@ -33,6 +33,7 @@ impl FromStr for BootstrapAddress {
             Some(addr) => Ok(Multiaddr::from_str(addr)
                 .map_err(|e| PeerError::InvalidBootstrapError(e.into()))?),
             None => {
+                log::error!("Missing address in bootstrap string: {}", s);
                 Err(PeerError::InvalidBootstrapError("Missing address".into()))
             }
         }?;
