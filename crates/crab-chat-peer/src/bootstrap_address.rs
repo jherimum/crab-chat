@@ -34,6 +34,7 @@ impl FromStr for BootstrapAddress {
                 .map_err(|e| PeerError::InvalidBootstrapError(e.into()))?),
             None => {
                 log::error!("Missing address in bootstrap string: {}", s);
+                log::error!("Missing address in bootstrap string: {}", s);
                 Err(PeerError::InvalidBootstrapError("Missing address".into()))
             }
         }?;
